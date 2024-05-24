@@ -1,0 +1,41 @@
+- name: 创建ES数据存储目录
+  shell: |
+    mkdir -p /data/es_data
+    useradd arius
+    echo "arius soft nofile 655350" >> /etc/security/limits.conf
+    echo "arius hard nofile 655350" >> /etc/security/limits.conf
+    echo "vm.max_map_count = 655360" >> /etc/sysctl.conf
+    sysctl -p
+
+- name: 解压安装包
+  unarchive:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: "elasticsearch.tar.gz", dest: "/data/" }
+
+- name: 更改目录所属组
+  shell: |
+    chown -R arius:arius /data/elasticsearch
+    chown -R arius:arius /data/es_data
+
+- name: 启动服务
+  shell: |
+    su arius -c 'sh /data/elasticsearch/control.sh start'
+- name: 检查服务
+  shell: |
+    su arius -c 'sh /data/elasticsearch/control.sh status'
+  register: ver
+#- name: 启动服务
+#  become: yes
+#  become_user: arius
+#  shell: sh /data/elasticsearch/control.sh start
+
+#- name: 输出服务进程
+#  become: yes
+#  become_user: arius
+#  shell: sh /data/elasticsearch/control.sh status
+#  register: ver
+- name:
+  debug:
+    msg: "{{ ver.stdout }}"
