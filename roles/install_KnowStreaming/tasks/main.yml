@@ -1,0 +1,37 @@
+- name: COPY KnowStreaming.zip
+  unarchive:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: "KnowStreaming-3.2.0.tar.gz",dest: "/data/"}
+
+
+
+
+
+- name: CREATE && IMPORT SQL
+  shell: |
+    mysql -uroot -pAdmin_123 -e "create database know_streaming;"
+    mysql -uroot -pAdmin_123  know_streaming < /data/KnowStreaming/init/sql/ddl-ks-km.sql
+    mysql -uroot -pAdmin_123  know_streaming < /data/KnowStreaming/init/sql/ddl-logi-job.sql
+    mysql -uroot -pAdmin_123  know_streaming < /data/KnowStreaming/init/sql/ddl-logi-security.sql
+    mysql -uroot -pAdmin_123  know_streaming < /data/KnowStreaming/init/sql/dml-ks-km.sql
+    mysql -uroot -pAdmin_123  know_streaming < /data/KnowStreaming/init/sql/dml-logi.sql
+
+
+- name: elasticsearch init sh
+  shell: sh /data/KnowStreaming/bin/init_es_template.sh
+
+- name: start KnowStreaming
+  shell: sh /data/KnowStreaming/bin/startup.sh
+  register: start_KnowStreaming
+
+- name: check KnowStreaming
+  debug: var=start_KnowStreaming.stdout_lines
+
+- name: 打印访问信息
+  debug:
+    msg:
+      - "*****************************************************************"
+      - "             访问 http://{{ inventory_hostname }}:8080 查看访问信息               "
+      - "*****************************************************************"
