@@ -1,0 +1,60 @@
+- name: 解压mysql5.7.tar.gz
+  unarchive:
+    src: mysql5.7.tar.gz
+    dest: /tmp
+
+- name: 安装mysql
+  shell: yum -y localinstall /tmp/libaio-*.rpm /tmp/mysql-*.rpm
+- name:
+  command: systemctl stop mysqld
+
+- name: mysql初始话
+  lineinfile:
+    path: /etc/my.cnf
+    line: "skip-grant-tables"
+
+- name: 启动mysql
+  shell: systemctl start mysqld
+
+- name: 更改账号
+  script: mysql.sh
+
+#- name: 更新 MySQL root 用户密码
+#  mysql_db:
+#    login_user: root
+#    login_password: root
+#    login_unix_socket: /var/run/mysqld/mysqld.sock
+#    db: mysql
+#    state: query
+#    sql: "UPDATE user SET authentication_string = PASSWORD('Admin_123') WHERE User = 'root' AND Host = 'localhost'"
+#- name: 初始化 MySQL 密码
+#  mysql_user:
+#    login_user: root
+#    login_password: root
+#    name: root
+#    host: localhost
+#    password: "Admin_123"
+#    state: present
+
+
+- name: 关闭Mysql
+  command: systemctl stop mysqld
+
+- name: 删除skip-grant-tables
+  lineinfile:
+    path: /etc/my.cnf
+    state: absent
+    regexp: '^skip-grant-tables'
+
+- name: 重启mysql
+  shell: systemctl start mysqld
+
+  - name: 权限最大化
+  script: mysql1.sh
+#- name: 权限最大话
+#  mysql_user:
+#    name: root
+#    host: '%'
+#    password: Admin_123
+#    priv: '*.*:ALL'
+#    state: present
