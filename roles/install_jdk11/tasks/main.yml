@@ -1,0 +1,49 @@
+- name: 检查JDK
+  shell: rpm -qa | grep jdk
+  register: jdk
+  changed_when: false
+  failed_when: false
+- name:
+  debug:
+    msg: "{{ jdk.stdout }}"
+  when: jdk.stdout != ""
+
+- name: 检查/usr/local/目录是否存在
+  stat:
+    path: /usr/local/
+  register: dir_status
+
+- name: 创建/usr/local/目录
+  command:
+    cmd: mkdir -p /usr/local/
+  when: not dir_status.stat.exists
+
+- name: 解压到指定目录
+  unarchive:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: "jdk11.tar.gz" ,dest: "/usr/local/" }
+
+- name: 更改目录名
+  shell: mv /usr/local/jdk-11.0.2 /usr/local/java11
+  
+  - name: 替换环境变量
+  shell: |
+    sed -i -e 's#export JAVA_HOME=/usr/java/jdk1.8.0_341-amd64#export JAVA_HOME=/usr/local/java11#g' \
+           -e 's#export PATH=$JAVA_HOME/bin:$PATH#export CLASSPATH=/usr/java/java11/lib#g' \
+           -e 's#CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar#export PATH=$JAVA_HOME/bin:$PATH:$HOME/bin#g' \
+           /etc/profile
+
+- name: source环境变量
+  shell: source /etc/profile
+
+
+- name: 输出JDK版本
+  shell: java -version 2>&1
+  register: ver
+  changed_when: false
+  failed_when: false
+- name:
+  debug:
+    msg: "{{ ver.stdout }}"
